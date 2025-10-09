@@ -12,3 +12,43 @@ body {
     font-size: 20px;
     text-align: center;
   }
+
+  a {
+    text-align: right;
+  }
+
+  .secret:link {
+    text-decoration: none;
+    color: black;
+  }
+
+  .secret:visited {
+    text-decoration: none;
+    color: black;
+  }
+
+  .secret:hover {
+    text-decoration: none;
+    color: black;
+  }
+
+  .secret:active {
+    text-decoration: none;
+    color: black;
+  }
+
+  @font-face {
+    font-family: 'Wingdings';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Wingdings'), url('wingding.woff') format('woff');
+  }
+  
+  .ast-body * {
+    font-family: 'Wingdings', sans-serif;
+  }
+  
+  .ast-header {
+    font-size: xx-large;
+    text-align: right;
+  }
