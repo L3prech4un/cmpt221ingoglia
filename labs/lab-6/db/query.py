@@ -1,5 +1,6 @@
 """query.py: leverages SQLAlchemy to create generic queries for interacting with the postgres DB"""
 from db.server import get_session
+import bcrypt
 
 def get_all(table) -> list:
     """Select all records from a DB table using SQLAlchemy ORM.
@@ -16,5 +17,34 @@ def get_all(table) -> list:
         records = session.query(table).all()
         return records
     
+    finally:
+        session.close()
+
+def get_one(table, **filters) -> object:
+    """Select one record from a DB table without using SQLAlchemy ORM.
+        args:
+            table (object): db table
+            **filters: the attribute(s) to query by
+        
+        returns:
+            user (object): one user from table
+    """
+    session = get_session()
+    try:
+        # Get one User from table
+        user = session.query(table).filter_by(**filters).first()
+        return user
+    finally:
+        session.close()
+
+def insert(record) -> None:
+    session = get_session()
+
+    try:
+        session.add(record)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print("Error inserting record:", e)
     finally:
         session.close()
