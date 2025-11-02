@@ -1,11 +1,21 @@
 """app.py: render and route to webpages"""
 
 import os
+import re
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for
-from db.query import get_all, insert
+from db.query import get_all, insert, get_one
 from db.server import init_database
 from db.schema import Users 
+import bcrypt
+from jinja2 import Environment, PackageLoader, select_autoescape
+import logging
+
+# set up jinja environment
+jinja_env = Environment(
+    loader=PackageLoader("app"),
+    autoescape=select_autoescape()
+)
 
 # load environment variables from .env
 load_dotenv()
@@ -15,6 +25,12 @@ db_name = os.getenv('db_name')
 db_owner = os.getenv('db_owner')
 db_pass = os.getenv('db_pass')
 db_url = f"postgresql://{db_owner}:{db_pass}@localhost/{db_name}"
+
+# Error logging
+os.makedirs('logs', exist_ok=True)
+logging.basicConfig(filename='logs/log.txt', level=logging.INFO, filemode='a', format="%(asctime)s - [%(levelname)s] - %(message)s")
+logger = logging.getLogger(__name__)
+
 
 def create_app():
     """Create Flask application and connect to your DB"""
@@ -45,36 +61,92 @@ def create_app():
     @app.route('/signup', methods=['GET', 'POST'])
     def signup():
         """Sign up page: enables users to sign up"""
-        #TODO: implement sign up logic here
+        form = {key: value.strip() for key, value in request.form.items()}
         if request.method == 'POST':
-            try:
-                user = Users(FirstName=request.form['FirstName'],
-                            LastName=request.form['LastName'],
-                            Email=request.form['Email'],
-                            PhoneNumber=request.form['PhoneNumber'],
-                            Password=request.form['Password'])
-                insert(user)
-                return redirect('/')
+            isValid = False
+            try:                
+                if form['FirstName'].isalpha():
+                    print(f'Input: {form["FirstName"]} is valid.')
+                    isValid = True
+                else:
+                    isValid = False
+                    print(f'Input: {form["FirstName"]} is not valid. First name can only contain letters.')
+                    logger.error(f'Input: {form["FirstName"]} is not valid. First name can only contain letters.')
+                    usr_error_msg = "First name can only contain letters."
+                    return render_template('signup.html', error=usr_error_msg)
+
+                if form['LastName'].isalpha():
+                    print(f'Input: {form["LastName"]} is valid.')
+                    isValid = True
+                else:
+                    isValid = False
+                    print(f'Input: {form["LastName"]} is not valid')
+                    logger.error(f'Input: {form["LastName"]} is not valid')
+                    usr_error_msg = "Last name can only contain letters."
+                    return render_template('signup.html', error=usr_error_msg)
+
+
+                if form['PhoneNumber'].isnumeric and re.fullmatch(r'\d{10}', form["PhoneNumber"]):
+                    print(f'Input: {form["PhoneNumber"]} is valid.')
+                else:
+                    isValid = False
+                    print(f'Input: {form["PhoneNumber"]} is not valid. Please make sure it only contains numbers [0-9] and it 10 characters in length.')
+                    logger.error(f'Input: {form["PhoneNumber"]} is not valid. Please make sure it only contains numbers [0-9] and it 10 characters in length.')
+                    usr_error_msg = "Phone number must be 10 digits long and contain only numbers [0-9]."
+                    return render_template('signup.html', error=usr_error_msg)
+
+                if isValid:
+                    user = Users(FirstName=form['FirstName'],
+                            LastName=form['LastName'],
+                            Email=form['Email'],
+                            PhoneNumber=form['PhoneNumber'],
+                            Password=form['Password'])
+                    hashed = bcrypt.hashpw(user.Password.encode('utf-8'), bcrypt.gensalt())
+                    user.Password = hashed.decode('utf-8')
+                    try:    
+                        insert(user)
+                        return redirect(url_for('login'))
+                    except Exception as e:
+                        print(f"[ERROR] An error occured: {e}")
+                        logger.error(f"[ERROR] An error occured: {e}")
+                else:
+                    usr_error_msg = "An error occurred while creating your account. Please try again later."
+                    return render_template('error.html', error=usr_error_msg)
             except Exception as e:
                 print("Error inserting user: ", e)
-                return redirect('/signup')
+                logger.error("Error inserting user: ", e)
+
+                usr_error_msg = "One or more of your inputs were invalid. Please try again."
+                return render_template('error.html', error=usr_error_msg)
         elif request.method == 'GET':
             return render_template('signup.html')
     
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         """Log in page: enables users to log in"""
-        # TODO: implement login logic here
+        form = {key: value.strip() for key, value in request.form.items()}
         if request.method == 'POST':
             try:
-                email = request.form['Email']
-                password = request.form['Password']
-                all_users = get_all(Users)
-                for user in all_users:
-                    if user.Email == email and user.Password == password:
+                email = form['Email']
+                password_entered = form['Password']
+                user = get_one(Users, Email=email)
+
+                if user and user.Password:
+                    user_hash = user.Password.encode('utf-8')
+                    if bcrypt.checkpw(password_entered.encode('utf-8'), user_hash):
+                        print("Password do match!")
                         return redirect(url_for('success'))
+                    else:
+                        print("Passwords do not match!")
+                        logger.info(f"Failed login attempt for {email}!\nPasswords did not match.")
+                        return redirect('/login')
+                else:
+                    print("Email does not exist!")
+                    logger.info(f"Failed login attempt for {email}!\nEmail does not exist.")
+                    return redirect('/login')
             except Exception as e:
                 print("Error Logging in: ", e)
+                logger.error(f"An error occurred during login: {e} ")
                 return redirect('/login')
         elif request.method == 'GET':
             return render_template('login.html')
