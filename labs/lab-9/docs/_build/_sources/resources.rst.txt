@@ -1,0 +1,41 @@
+.. _`Resources`:
+
+Resources
+=========
+This section describes classes and functions private to lab-9. It is intended to document how the application works
+
+labs.lab-1
+----------
+Teaches students about git and pull requests
+
+labs.lab-2
+----------
+Teaches students about python virtual environments
+
+labs.lab-3
+----------
+Teaches students about SQL databases
+
+labs.lab-4
+----------
+Teaches students about Flask and SQLalchemy ORM
+
+labs.lab-5
+----------
+Teaches students about gui design
+
+labs.lab-6
+----------
+Teaches students login functionality with python
+
+labs.lab-7
+----------
+Teaches students defensive programming
+
+labs.lab-8
+----------
+Teaches students code testing with Pytest
+
+labs.lab-9
+----------
+Teaches students about
