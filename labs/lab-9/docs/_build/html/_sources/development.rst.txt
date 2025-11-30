@@ -38,7 +38,7 @@ Unit tests are developed using Pytest. To run the test suite, issue:
 
 Build Documentation
 -------------------
-The Github pages site is used to publish documentation for the ``cmpt221ingoglia`` application at l3prech4un.github.io/cmpt221ingoglia/index.html
+The Github pages site is used to publish documentation for the ``cmpt221ingoglia`` application at https://l3prech4un.github.io/cmpt221ingoglia/index.html
 
 To build the documentation, issue:
 

@@ -8,4 +8,4 @@ Documentation
 -------------
 * `Document Page`_
 
-.. _Document Page: l3prech4un.github.io/cmpt221ingoglia/index.html
+.. _Document Page: https://l3prech4un.github.io/cmpt221ingoglia/index.html
