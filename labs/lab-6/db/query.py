@@ -18,3 +18,15 @@ def get_all(table) -> list:
     
     finally:
         session.close()
+
+def insert(record) -> None:
+    session = get_session()
+
+    try:
+        session.add(record)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print("Error inserting record:", e)
+    finally:
+        session.close()

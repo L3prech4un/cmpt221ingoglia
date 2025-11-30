@@ -2,10 +2,10 @@
 
 import os
 from dotenv import load_dotenv
-from flask import Flask, render_template
-from db.query import get_all
+from flask import Flask, render_template, request, redirect, url_for
+from db.query import get_all, insert
 from db.server import init_database
-from db.schema import Users
+from db.schema import Users 
 
 # load environment variables from .env
 load_dotenv()
@@ -42,19 +42,42 @@ def create_app():
         """Home page"""
         return render_template('index.html')
     
-    @app.route('/signup')
+    @app.route('/signup', methods=['GET', 'POST'])
     def signup():
         """Sign up page: enables users to sign up"""
         #TODO: implement sign up logic here
-
-        return render_template('signup.html')
+        if request.method == 'POST':
+            try:
+                user = Users(FirstName=request.form['FirstName'],
+                            LastName=request.form['LastName'],
+                            Email=request.form['Email'],
+                            PhoneNumber=request.form['PhoneNumber'],
+                            Password=request.form['Password'])
+                insert(user)
+                return redirect('/')
+            except Exception as e:
+                print("Error inserting user: ", e)
+                return redirect('/signup')
+        elif request.method == 'GET':
+            return render_template('signup.html')
     
-    @app.route('/login')
+    @app.route('/login', methods=['GET', 'POST'])
     def login():
         """Log in page: enables users to log in"""
         # TODO: implement login logic here
-
-        return render_template('login.html')
+        if request.method == 'POST':
+            try:
+                email = request.form['Email']
+                password = request.form['Password']
+                all_users = get_all(Users)
+                for user in all_users:
+                    if user.Email == email and user.Password == password:
+                        return redirect(url_for('success'))
+            except Exception as e:
+                print("Error Logging in: ", e)
+                return redirect('/login')
+        elif request.method == 'GET':
+            return render_template('login.html')
 
     @app.route('/users')
     def users():
